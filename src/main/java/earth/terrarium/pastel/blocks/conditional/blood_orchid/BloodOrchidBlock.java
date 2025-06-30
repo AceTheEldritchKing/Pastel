@@ -5,6 +5,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import de.dafuqs.revelationary.api.revelations.RevelationAware;
 import earth.terrarium.pastel.PastelCommon;
 import earth.terrarium.pastel.progression.PastelAdvancementCriteria;
+import earth.terrarium.pastel.registries.PastelAdvancements;
 import earth.terrarium.pastel.registries.PastelItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
@@ -38,98 +39,119 @@ import java.util.Map;
 
 public class BloodOrchidBlock extends FlowerBlock implements BonemealableBlock, RevelationAware {
 
-	public static final MapCodec<BloodOrchidBlock> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-			EFFECTS_FIELD.forGetter(FlowerBlock::getSuspiciousEffects),
-			propertiesCodec()
-	).apply(instance, BloodOrchidBlock::new));
+    public static final MapCodec<BloodOrchidBlock> CODEC = RecordCodecBuilder.mapCodec(instance -> instance
+        .group(
+            EFFECTS_FIELD.forGetter(FlowerBlock::getSuspiciousEffects),
+            propertiesCodec()
+        )
+        .apply(instance, BloodOrchidBlock::new));
 
-	public static final ResourceLocation ADVANCEMENT_IDENTIFIER = PastelCommon.locate("midgame/collect_blood_orchid_petal");
-	public static final IntegerProperty AGE = BlockStateProperties.AGE_5;
-	
-	public BloodOrchidBlock(Holder<MobEffect> stewEffect, float effectLengthInSeconds, Properties settings) {
-		this(makeEffectList(stewEffect, effectLengthInSeconds), settings);
-	}
+    public static final ResourceLocation ADVANCEMENT_IDENTIFIER = PastelCommon.locate(
+        "midgame/collect_blood_orchid_petal");
+    public static final IntegerProperty AGE = BlockStateProperties.AGE_5;
 
-	public BloodOrchidBlock(SuspiciousStewEffects stewEffects, BlockBehaviour.Properties settings) {
-		super(stewEffects, settings);
-		this.registerDefaultState(this.stateDefinition.any().setValue(AGE, 0));
-		RevelationAware.register(this);
-	}
+    public BloodOrchidBlock(Holder<MobEffect> stewEffect, float effectLengthInSeconds, Properties settings) {
+        this(makeEffectList(stewEffect, effectLengthInSeconds), settings);
+    }
 
-	@Override
-	public MapCodec<? extends BloodOrchidBlock> codec() {
-		return CODEC;
-	}
-	
-	@Override
-	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-		builder.add(AGE);
-	}
-	
-	private void growOnce(BlockState state, ServerLevel world, BlockPos pos) {
-		BlockState newState = state.setValue(AGE, state.getValue(AGE) + 1);
-		world.setBlockAndUpdate(pos, newState);
-		world.playSound(null, pos, state.getSoundType().getPlaceSound(), SoundSource.BLOCKS, 1.0F, 1.0F);
-	}
-	
-	@Override
-	public void randomTick(BlockState state, ServerLevel world, BlockPos pos, RandomSource random) {
-		if (state.getValue(AGE) < BlockStateProperties.MAX_AGE_5 && random.nextFloat() <= 0.25) {
-			growOnce(state, world, pos);
-		}
-	}
-	
-	@Override
-	public InteractionResult useWithoutItem(BlockState state, Level world, BlockPos pos, Player player, BlockHitResult hit) {
-		int age = state.getValue(AGE);
-		if (age > 0) {
-			if (world.isClientSide) {
-				return InteractionResult.SUCCESS;
-			} else {
-				world.setBlockAndUpdate(pos, state.setValue(AGE, age - 1));
-				player.getInventory().placeItemBackInInventory(PastelItems.BLOOD_ORCHID_PETAL.get().getDefaultInstance());
-				world.playSound(null, pos, SoundEvents.ITEM_PICKUP, SoundSource.BLOCKS, 1.0F, 0.9F + world.random.nextFloat() * 0.2F);
-				if (player instanceof ServerPlayer serverPlayerEntity) {
-					PastelAdvancementCriteria.BLOOD_ORCHID_PLUCKING.trigger(serverPlayerEntity);
-				}
-				return InteractionResult.CONSUME;
-			}
-		}
-		return InteractionResult.PASS;
-	}
-	
-	@Override
-	public ResourceLocation getCloakAdvancementIdentifier() {
-		return ADVANCEMENT_IDENTIFIER;
-	}
-	
-	@Override
-	public Map<BlockState, BlockState> getBlockStateCloaks() {
-		Map<BlockState, BlockState> map = new Hashtable<>();
-		for (int i = 0; i <= BlockStateProperties.MAX_AGE_5; i++) {
-			map.put(this.defaultBlockState().setValue(AGE, i), Blocks.RED_TULIP.defaultBlockState());
-		}
-		return map;
-	}
-	
-	@Override
-	public Tuple<Item, Item> getItemCloak() {
-		return null; // does not exist in item form
-	}
-	
-	@Override
-	public boolean isValidBonemealTarget(LevelReader world, BlockPos pos, BlockState state) {
-		return state.getValue(AGE) < BlockStateProperties.MAX_AGE_5;
-	}
-	
-	@Override
-	public boolean isBonemealSuccess(Level world, RandomSource random, BlockPos pos, BlockState state) {
-		return true;
-	}
-	
-	@Override
-	public void performBonemeal(ServerLevel world, RandomSource random, BlockPos pos, BlockState state) {
-		growOnce(state, world, pos);
-	}
-	
+    public BloodOrchidBlock(SuspiciousStewEffects stewEffects, BlockBehaviour.Properties settings) {
+        super(stewEffects, settings);
+        this.registerDefaultState(this.stateDefinition
+                                      .any()
+                                      .setValue(AGE, 0));
+        RevelationAware.register(this);
+    }
+
+    @Override
+    public MapCodec<? extends BloodOrchidBlock> codec() {
+        return CODEC;
+    }
+
+    @Override
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(AGE);
+    }
+
+    private void growOnce(BlockState state, ServerLevel world, BlockPos pos) {
+        BlockState newState = state.setValue(AGE, state.getValue(AGE) + 1);
+        world.setBlockAndUpdate(pos, newState);
+        world.playSound(
+            null, pos, state
+                .getSoundType()
+                .getPlaceSound(), SoundSource.BLOCKS, 1.0F, 1.0F
+        );
+    }
+
+    @Override
+    public void randomTick(BlockState state, ServerLevel world, BlockPos pos, RandomSource random) {
+        if (state.getValue(AGE) < BlockStateProperties.MAX_AGE_5 && random.nextFloat() <= 0.25) {
+            growOnce(state, world, pos);
+        }
+    }
+
+    @Override
+    public InteractionResult useWithoutItem(
+        BlockState state, Level world, BlockPos pos, Player player, BlockHitResult hit) {
+        int age = state.getValue(AGE);
+        if (age > 0) {
+            if (world.isClientSide) {
+                return InteractionResult.SUCCESS;
+            } else {
+                world.setBlockAndUpdate(pos, state.setValue(AGE, age - 1));
+                player
+                    .getInventory()
+                    .placeItemBackInInventory(PastelItems.BLOOD_ORCHID_PETAL
+                                                  .get()
+                                                  .getDefaultInstance());
+                world.playSound(
+                    null, pos, SoundEvents.ITEM_PICKUP, SoundSource.BLOCKS, 1.0F,
+                    0.9F + world.random.nextFloat() * 0.2F
+                );
+                if (player instanceof ServerPlayer serverPlayerEntity) {
+                    PastelAdvancementCriteria.BLOOD_ORCHID_PLUCKING.trigger(serverPlayerEntity);
+                }
+                return InteractionResult.CONSUME;
+            }
+        }
+        return InteractionResult.PASS;
+    }
+
+    @Override
+    public ResourceLocation getCloakAdvancementIdentifier() {
+        return PastelAdvancements.Midgame.COLLECT_BLOOD_ORCHID_PETAL;
+    }
+
+    @Override
+    public Map<BlockState, BlockState> getBlockStateCloaks() {
+        Map<BlockState, BlockState> map = new Hashtable<>();
+        for (int i = 0; i <= BlockStateProperties.MAX_AGE_5; i++) {
+            map.put(
+                this
+                    .defaultBlockState()
+                    .setValue(AGE, i), Blocks.RED_TULIP.defaultBlockState()
+            );
+        }
+        return map;
+    }
+
+    @Override
+    public Tuple<Item, Item> getItemCloak() {
+        return null; // does not exist in item form
+    }
+
+    @Override
+    public boolean isValidBonemealTarget(LevelReader world, BlockPos pos, BlockState state) {
+        return state.getValue(AGE) < BlockStateProperties.MAX_AGE_5;
+    }
+
+    @Override
+    public boolean isBonemealSuccess(Level world, RandomSource random, BlockPos pos, BlockState state) {
+        return true;
+    }
+
+    @Override
+    public void performBonemeal(ServerLevel world, RandomSource random, BlockPos pos, BlockState state) {
+        growOnce(state, world, pos);
+    }
+
 }
