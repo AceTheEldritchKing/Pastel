@@ -35,6 +35,7 @@ import earth.terrarium.pastel.registries.PastelItems;
 import earth.terrarium.pastel.registries.PastelLevels;
 import earth.terrarium.pastel.registries.PastelMobEffects;
 import earth.terrarium.pastel.registries.PastelSounds;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
@@ -109,9 +110,7 @@ public class PaintbrushItem extends Item implements SignApplicator {
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag type) {
         super.appendHoverText(stack, context, tooltip, type);
 
-        if (EffectiveSide
-            .get()
-            .isClient()) {
+        if (EffectiveSide.get().isClient()) {
             appendClientTooltips(stack, tooltip);
         }
     }
@@ -127,6 +126,7 @@ public class PaintbrushItem extends Item implements SignApplicator {
                     Component
                         .translatable("key.pickItem")
                         .append(Component.translatable("item.pastel.paintbrush.tooltip.menu"))
+                        .withStyle(ChatFormatting.GRAY)
                 );
         }
         PaintbrushComponent data = stack.getOrDefault(PastelDataComponentTypes.PAINTBRUSH, PaintbrushComponent.DEFAULT);
@@ -135,44 +135,26 @@ public class PaintbrushItem extends Item implements SignApplicator {
             case PAINT -> tooltip.add(Component.translatable("item.pastel.paintbrush.tooltip.paint"));
             case SPELL -> tooltip.add(Component.translatable("item.pastel.paintbrush.tooltip.spell"));
         }
-        if (data.mode() == PaintbrushComponent.PaintbrushMode.PAINT && data
-            .color()
-            .isPresent()) {
+        if (data.mode() == PaintbrushComponent.PaintbrushMode.PAINT && data.color().isPresent()) {
             tooltip
                 .add(
                     Component
                         .translatable("item.pastel.paintbrush.tooltip.color.selected")
-                        .append(
-                            data
-                                .color()
-                                .get()
-                                .getColoredName()
-                        )
+                        .append(data.color().get().getColoredName())
                 );
         }
-        if (data
+        if (data.color().isPresent() && data.mode() == PaintbrushComponent.PaintbrushMode.SPELL && data
             .color()
-            .isPresent() && data.mode() == PaintbrushComponent.PaintbrushMode.SPELL && data
-                .color()
-                .get()
-                .getDyeColor()
-                .isPresent()) {
+            .get()
+            .getDyeColor()
+            .isPresent()) {
             tooltip
                 .add(
                     Component
                         .translatable(
-                            "item.pastel.paintbrush.tooltip.cantrip." + data
-                                .color()
-                                .get()
-                                .toString()
-                                .substring(7)
+                            "item.pastel.paintbrush.tooltip.cantrip." + data.color().get().toString().substring(7)
                         )
-                        .withColor(
-                            data
-                                .color()
-                                .get()
-                                .getTextColorInt()
-                        )
+                        .withColor(data.color().get().getTextColorInt())
                 );
         }
     }
@@ -215,15 +197,11 @@ public class PaintbrushItem extends Item implements SignApplicator {
     }
 
     public static Optional<InkColor> getColor(ItemStack stack) {
-        return stack
-            .getOrDefault(PastelDataComponentTypes.PAINTBRUSH, PaintbrushComponent.DEFAULT)
-            .color();
+        return stack.getOrDefault(PastelDataComponentTypes.PAINTBRUSH, PaintbrushComponent.DEFAULT).color();
     }
 
     public PaintbrushComponent.PaintbrushMode getMode(ItemStack stack) {
-        return stack
-            .getOrDefault(PastelDataComponentTypes.PAINTBRUSH, PaintbrushComponent.DEFAULT)
-            .mode();
+        return stack.getOrDefault(PastelDataComponentTypes.PAINTBRUSH, PaintbrushComponent.DEFAULT).mode();
     }
 
     @Override
@@ -277,9 +255,7 @@ public class PaintbrushItem extends Item implements SignApplicator {
         if (inkColor.isEmpty()) {
             return false;
         }
-        var dyeColor = inkColor
-            .get()
-            .getDyeColor();
+        var dyeColor = inkColor.get().getDyeColor();
         if (dyeColor.isEmpty()) return false;
         var player = context.getPlayer();
         if (player == null || !InkPowered.hasAvailableInk(player, inkColor.get(), CANTRIP_COST)) return false;
@@ -287,10 +263,7 @@ public class PaintbrushItem extends Item implements SignApplicator {
         var pos = context.getClickedPos();
         var state = level.getBlockState(pos);
         var component = paintbrush.getOrDefault(PastelDataComponentTypes.PAINTBRUSH, PaintbrushComponent.DEFAULT);
-        var blockRegistry = context
-            .getLevel()
-            .registryAccess()
-            .registryOrThrow(Registries.BLOCK);
+        var blockRegistry = context.getLevel().registryAccess().registryOrThrow(Registries.BLOCK);
         switch (dyeColor.get()) { // note: because java is fucked up and evil the stargazer colors will not be able
             // to be in here
             case MAGENTA -> { // "World’s worst tick acceleration"
@@ -303,17 +276,9 @@ public class PaintbrushItem extends Item implements SignApplicator {
             }
             case BLUE -> { // "Temporary Blocks"
                 var toPlace = pos.relative(context.getClickedFace());
-                if (level
-                    .getBlockState(toPlace)
-                    .canBeReplaced()) {
+                if (level.getBlockState(toPlace).canBeReplaced()) {
                     level
-                        .setBlock(
-                            toPlace,
-                            PastelBlocks.TEMPORARY_PLATFORM
-                                .get()
-                                .defaultBlockState(),
-                            Block.UPDATE_ALL
-                        );
+                        .setBlock(toPlace, PastelBlocks.TEMPORARY_PLATFORM.get().defaultBlockState(), Block.UPDATE_ALL);
                     level.scheduleTick(toPlace, PastelBlocks.TEMPORARY_PLATFORM.get(), 600);
                     return true;
                 }
@@ -329,20 +294,12 @@ public class PaintbrushItem extends Item implements SignApplicator {
                     .hasBlockEntity() || state.is(PastelBlockTags.REALLY_FALLING_BLOCK_BLACKLISTED)) {
                     return false;
                 }
-                var enchReg = level
-                    .registryAccess()
-                    .registry(Registries.ENCHANTMENT);
+                var enchReg = level.registryAccess().registry(Registries.ENCHANTMENT);
                 if (enchReg.isEmpty()) return false;
-                var resonance = enchReg
-                    .get()
-                    .getHolder(PastelEnchantments.RESONANCE);
+                var resonance = enchReg.get().getHolder(PastelEnchantments.RESONANCE);
                 if (resonance.isEmpty()) return false;
                 if (state.is(PastelBlockTags.FALLING_BLOCK_BLACKLISTED) && !Ench
-                    .hasEnchantment(
-                        serverLevel.registryAccess(),
-                        PastelEnchantments.RESONANCE,
-                        paintbrush
-                    )) {
+                    .hasEnchantment(serverLevel.registryAccess(), PastelEnchantments.RESONANCE, paintbrush)) {
                     return false;
                 }
                 FallingBlockEntity.fall(serverLevel, pos, state);
@@ -350,15 +307,11 @@ public class PaintbrushItem extends Item implements SignApplicator {
             }
             case YELLOW -> { // "Lightning"
                 var offsetPos = pos.relative(context.getClickedFace());
-                if (level
-                    .getBlockState(offsetPos)
-                    .canBeReplaced()) {
+                if (level.getBlockState(offsetPos).canBeReplaced()) {
                     level
                         .setBlock(
                             offsetPos,
-                            PastelBlocks.ENERGETIC_MOTE
-                                .get()
-                                .defaultBlockState(),
+                            PastelBlocks.ENERGETIC_MOTE.get().defaultBlockState(),
                             Block.UPDATE_ALL_IMMEDIATE
                         );
                     level.scheduleTick(offsetPos, PastelBlocks.ENERGETIC_MOTE.get(), 2);
@@ -379,31 +332,21 @@ public class PaintbrushItem extends Item implements SignApplicator {
                         var index = list.indexOf(state.getBlockHolder()) + 1;
                         if (index >= list.size()) index = 0;
                         // if you blacklist an entire tag and cause an infinite loop here: i hate you so much
-                        while (list
-                            .get(index)
-                            .is(PastelBlockTags.MUTANDIS_BLACKLIST)) index = (index + 1) % list.size();
-                        var holder = list
-                            .get(index)
-                            .unwrap();
+                        while (list.get(index).is(PastelBlockTags.MUTANDIS_BLACKLIST))
+                            index = (index + 1) % list.size();
+                        var holder = list.get(index).unwrap();
                         // waugh. this is needed so that mutating from amaranth to a single block
                         // doesn't leave floating half-crops
                         BlockPos finalPos = (state.getBlock() instanceof TallCropBlock && state
-                            .getValue(
-                                TallCropBlock.HALF
-                            ) == DoubleBlockHalf.UPPER) ? pos.below() : pos;
-                        if (state.getBlock() instanceof DoublePlantBlock) level
-                            .setBlock(
-                                pos.above(),
-                                Blocks.AIR.defaultBlockState(),
-                                Block.UPDATE_SUPPRESS_DROPS
-                            );
+                            .getValue(TallCropBlock.HALF) == DoubleBlockHalf.UPPER) ? pos.below() : pos;
+                        if (state.getBlock() instanceof DoublePlantBlock)
+                            level.setBlock(pos.above(), Blocks.AIR.defaultBlockState(), Block.UPDATE_SUPPRESS_DROPS);
                         holder.ifLeft(blockResourceKey -> {
                             var newBlock = blockRegistry.get(blockResourceKey);
                             if (newBlock != null) mutate(finalPos, newBlock, sl);
-                        })
-                            .ifRight(block1 -> {
-                                mutate(finalPos, block1, sl);
-                            });
+                        }).ifRight(block1 -> {
+                            mutate(finalPos, block1, sl);
+                        });
                         return true;
                     }
                 }
@@ -452,12 +395,7 @@ public class PaintbrushItem extends Item implements SignApplicator {
                 return true;
             }
             case GREEN -> {
-                if (component
-                    .greenPos()
-                    .isPresent() && component
-                        .greenPos()
-                        .get()
-                        .equals(pos))
+                if (component.greenPos().isPresent() && component.greenPos().get().equals(pos))
                     return false; // no charge if you try to set it to the same block
                 paintbrush
                     .set(
@@ -467,10 +405,7 @@ public class PaintbrushItem extends Item implements SignApplicator {
                             component.color(),
                             component.brown(),
                             Optional.of(pos),
-                            level
-                                .dimension()
-                                .location()
-                                .toString()
+                            level.dimension().location().toString()
                         )
                     );
                 return true;
@@ -490,10 +425,11 @@ public class PaintbrushItem extends Item implements SignApplicator {
             case LIGHT_GRAY, LIGHT_BLUE, BLACK, PURPLE, RED, BROWN -> { // These don't do anything on blocks
                 return false;
             }
-            case null, default -> throw new IllegalStateException(
-                "Unimplemented color, yell at lily (unless this is from an addon in which case yell at them): " + inkColor
-                    .get()
-            );
+            case null, default ->
+                throw new IllegalStateException(
+                    "Unimplemented color, yell at lily (unless this is from an addon in which case yell at them): " + inkColor
+                        .get()
+                );
         }
     }
 
@@ -517,12 +453,7 @@ public class PaintbrushItem extends Item implements SignApplicator {
     private void mutate(BlockPos pos, Block block, ServerLevel level) {
         if (block instanceof DoublePlantBlock) {
             DoublePlantBlock
-                .placeAt(
-                    level,
-                    block.defaultBlockState(),
-                    pos,
-                    Block.UPDATE_SUPPRESS_DROPS | Block.UPDATE_ALL
-                );
+                .placeAt(level, block.defaultBlockState(), pos, Block.UPDATE_SUPPRESS_DROPS | Block.UPDATE_ALL);
         } else {
             level.setBlock(pos, block.defaultBlockState(), Block.UPDATE_SUPPRESS_DROPS | Block.UPDATE_ALL);
         }
@@ -533,9 +464,7 @@ public class PaintbrushItem extends Item implements SignApplicator {
         if (inkColor.isEmpty()) {
             return false;
         }
-        Optional<DyeColor> dyeColor = inkColor
-            .get()
-            .getDyeColor();
+        Optional<DyeColor> dyeColor = inkColor.get().getDyeColor();
 
         Level world = context.getLevel();
         BlockPos pos = context.getClickedPos();
@@ -543,12 +472,7 @@ public class PaintbrushItem extends Item implements SignApplicator {
         if (state.getBlock() instanceof ColorableBlock colorableBlock) {
             if (!colorableBlock.isColor(world, pos, dyeColor)) {
                 if (payBlockColorCost(context.getPlayer(), inkColor.get()) && colorableBlock
-                    .color(
-                        world,
-                        pos,
-                        dyeColor,
-                        context.getPlayer()
-                    )) {
+                    .color(world, pos, dyeColor, context.getPlayer())) {
                     context
                         .getLevel()
                         .playSound(
@@ -597,11 +521,7 @@ public class PaintbrushItem extends Item implements SignApplicator {
         DyeColor dyeColor = optionalDyeColor.get();
 
         BlockState newBlockState = BlockVariantHelper
-            .getCursedBlockColorVariant(
-                context.getLevel(),
-                context.getClickedPos(),
-                dyeColor
-            );
+            .getCursedBlockColorVariant(context.getLevel(), context.getClickedPos(), dyeColor);
         if (newBlockState.isAir()) {
             return false;
         }
@@ -622,9 +542,7 @@ public class PaintbrushItem extends Item implements SignApplicator {
             return true;
         } else {
             if (world.isClientSide) {
-                context
-                    .getPlayer()
-                    .playSound(PastelSounds.USE_FAIL, 1.0F, 1.0F);
+                context.getPlayer().playSound(PastelSounds.USE_FAIL, 1.0F, 1.0F);
             }
         }
         return false;
@@ -645,12 +563,7 @@ public class PaintbrushItem extends Item implements SignApplicator {
             return false;
         }
         return InventoryHelper
-            .removeFromInventoryWithRemainders(
-                player,
-                PigmentItem
-                    .byColor(inkColor)
-                    .getDefaultInstance()
-            );
+            .removeFromInventoryWithRemainders(player, PigmentItem.byColor(inkColor).getDefaultInstance());
     }
 
     @Override
@@ -687,18 +600,12 @@ public class PaintbrushItem extends Item implements SignApplicator {
         }
         var inkCost = CANTRIP_COST;
         var brownCost = 0;
-        if (stack
-            .getOrDefault(PastelDataComponentTypes.PAINTBRUSH, PaintbrushComponent.DEFAULT)
-            .brown()) {
+        if (stack.getOrDefault(PastelDataComponentTypes.PAINTBRUSH, PaintbrushComponent.DEFAULT).brown()) {
             inkCost = inkCost / 2;
             brownCost = inkCost;
         }
         return InkPowered.hasAvailableInk(player, color, inkCost) && (brownCost == 0 || InkPowered
-            .hasAvailableInk(
-                player,
-                InkColors.BROWN,
-                inkCost / 4
-            ));
+            .hasAvailableInk(player, InkColors.BROWN, inkCost / 4));
     }
 
     private boolean tryDrainCost(ItemStack stack, Player player, InkColor color) {
@@ -707,9 +614,7 @@ public class PaintbrushItem extends Item implements SignApplicator {
         }
         var inkCost = CANTRIP_COST;
         var brownCost = 0;
-        if (stack
-            .getOrDefault(PastelDataComponentTypes.PAINTBRUSH, PaintbrushComponent.DEFAULT)
-            .brown()) {
+        if (stack.getOrDefault(PastelDataComponentTypes.PAINTBRUSH, PaintbrushComponent.DEFAULT).brown()) {
             inkCost = inkCost / 2;
             brownCost = inkCost / 2;
         }
@@ -718,11 +623,7 @@ public class PaintbrushItem extends Item implements SignApplicator {
             .level()
             .playSound(null, BlockPos.containing(player.position()), PastelSounds.CAST_RADIANCE, SoundSource.PLAYERS);
         return InkPowered.tryDrainEnergy(player, color, inkCost) && InkPowered
-            .tryDrainEnergy(
-                player,
-                InkColors.BROWN,
-                brownCost
-            );
+            .tryDrainEnergy(player, InkColors.BROWN, brownCost);
     }
 
     private boolean tryAirCantrip(ItemStack stack, Level level, Player player, InteractionHand hand) {
@@ -730,9 +631,7 @@ public class PaintbrushItem extends Item implements SignApplicator {
         if (inkColor.isEmpty()) {
             return false;
         }
-        var dyeColor = inkColor
-            .get()
-            .getDyeColor();
+        var dyeColor = inkColor.get().getDyeColor();
         if (dyeColor.isEmpty()) return false;
         switch (dyeColor.get()) {
             case RED -> {
@@ -755,13 +654,7 @@ public class PaintbrushItem extends Item implements SignApplicator {
                     var item : level
                         .getEntitiesOfClass(
                             ItemEntity.class,
-                            AABB
-                                .ofSize(
-                                    player.position(),
-                                    ITEM_VACUUM_RANGE,
-                                    ITEM_VACUUM_RANGE,
-                                    ITEM_VACUUM_RANGE
-                                )
+                            AABB.ofSize(player.position(), ITEM_VACUUM_RANGE, ITEM_VACUUM_RANGE, ITEM_VACUUM_RANGE)
                         )
                 ) {
                     item.teleportTo(player.getX(), player.getY(), player.getZ());
@@ -788,25 +681,15 @@ public class PaintbrushItem extends Item implements SignApplicator {
                 if (!(player instanceof ServerPlayer serverPlayer)) return false;
                 var component = stack.getOrDefault(PastelDataComponentTypes.PAINTBRUSH, PaintbrushComponent.DEFAULT);
                 var optionalPos = component.greenPos();
-                if (optionalPos.isEmpty() || component
-                    .greenDim()
-                    .isEmpty()) return false;
+                if (optionalPos.isEmpty() || component.greenDim().isEmpty()) return false;
                 var pos = optionalPos.get();
                 if (!PastelCommon.isSameDimension(level, component.greenDim()) || !level.isLoaded(pos)) return false;
                 // we are in the same "lore dimension" but not the same level, so we need to get the right level
-                if (!level
-                    .dimension()
-                    .location()
-                    .toString()
-                    .equals(component.greenDim())) {
+                if (!level.dimension().location().toString().equals(component.greenDim())) {
                     if (level.getServer() == null) return false;
                     switch (component.greenDim()) {
-                        case "minecraft:overworld" -> level = level
-                            .getServer()
-                            .getLevel(Level.OVERWORLD);
-                        case "pastel:imbrifer" -> level = level
-                            .getServer()
-                            .getLevel(PastelLevels.DIMENSION_KEY);
+                        case "minecraft:overworld" -> level = level.getServer().getLevel(Level.OVERWORLD);
+                        case "pastel:imbrifer" -> level = level.getServer().getLevel(PastelLevels.DIMENSION_KEY);
                     }
                 }
                 if (level == null) return false;
@@ -822,24 +705,9 @@ public class PaintbrushItem extends Item implements SignApplicator {
             }
             case BLUE -> {
                 BlockHitResult hitResult = raycast(level, player, stack, hand);
-                if (hitResult == null || !level
-                    .getBlockState(hitResult.getBlockPos())
-                    .canBeReplaced()) return false;
-                var pos = hitResult
-                    .getBlockPos()
-                    .relative(
-                        player
-                            .getNearestViewDirection()
-                            .getOpposite()
-                    );
-                level
-                    .setBlock(
-                        pos,
-                        PastelBlocks.TEMPORARY_PLATFORM
-                            .get()
-                            .defaultBlockState(),
-                        Block.UPDATE_ALL
-                    );
+                if (hitResult == null || !level.getBlockState(hitResult.getBlockPos()).canBeReplaced()) return false;
+                var pos = hitResult.getBlockPos().relative(player.getNearestViewDirection().getOpposite());
+                level.setBlock(pos, PastelBlocks.TEMPORARY_PLATFORM.get().defaultBlockState(), Block.UPDATE_ALL);
                 level.scheduleTick(pos, PastelBlocks.TEMPORARY_PLATFORM.get(), 600);
                 return false;
             }
@@ -878,14 +746,7 @@ public class PaintbrushItem extends Item implements SignApplicator {
             .clip(
                 new ClipContext(
                     player.getEyePosition(),
-                    player
-                        .getEyePosition()
-                        .add(
-                            player
-                                .getViewVector(0f)
-                                .normalize()
-                                .scale(reachDistance)
-                        ),
+                    player.getEyePosition().add(player.getViewVector(0f).normalize().scale(reachDistance)),
                     ClipContext.Block.OUTLINE,
                     ClipContext.Fluid.NONE,
                     player
@@ -916,14 +777,10 @@ public class PaintbrushItem extends Item implements SignApplicator {
                     if (color.isPresent() && payBlockColorCost(player, color.get()) && EntityColorProcessorRegistry
                         .colorEntity(
                             entity,
-                            color
-                                .get()
-                                .getDyeColor(),
+                            color.get().getDyeColor(),
                             entity instanceof Player targetPlayer ? targetPlayer : null
                         )) {
-                        entity
-                            .level()
-                            .playSound(null, entity, SoundEvents.DYE_USE, SoundSource.PLAYERS, 1.0F, 1.0F);
+                        entity.level().playSound(null, entity, SoundEvents.DYE_USE, SoundSource.PLAYERS, 1.0F, 1.0F);
                         return InteractionResult.sidedSuccess(level.isClientSide);
                     }
                 }
@@ -947,9 +804,7 @@ public class PaintbrushItem extends Item implements SignApplicator {
         if (inkColor.isEmpty()) {
             return false;
         }
-        var dyeColor = inkColor
-            .get()
-            .getDyeColor();
+        var dyeColor = inkColor.get().getDyeColor();
         if (dyeColor.isEmpty()) return false;
         switch (dyeColor.get()) {
             case LIGHT_GRAY -> {
@@ -972,18 +827,13 @@ public class PaintbrushItem extends Item implements SignApplicator {
                         SoundEvents.FLINTANDSTEEL_USE,
                         SoundSource.PLAYERS,
                         1.0F,
-                        entity
-                            .level()
-                            .getRandom()
-                            .nextFloat() * 0.4F + 0.8F
+                        entity.level().getRandom().nextFloat() * 0.4F + 0.8F
                     );
                 return true;
             }
             case PURPLE -> {
                 return entity
-                    .addEffect(
-                        new MobEffectInstance(PastelMobEffects.TRUE_INVISIBILITY, 30 * 20, 0, false, false)
-                    );
+                    .addEffect(new MobEffectInstance(PastelMobEffects.TRUE_INVISIBILITY, 30 * 20, 0, false, false));
             }
             case YELLOW -> {
                 entity.hurt(PastelDamageTypes.electric(entity.level()), 2f);
@@ -1034,16 +884,12 @@ public class PaintbrushItem extends Item implements SignApplicator {
                 Optional<DyeColor> dyeColor = inkColor.getDyeColor();
 
                 if (canPaint(player) && payBlockColorCost(player, inkColor)) {
-                    if (signBlockEntity
-                        .updateText(
-                            signText -> {
-                                if (dyeColor.isPresent()) {
-                                    return signText.setColor(dyeColor.get());
-                                }
-                                return signText;
-                            },
-                            front
-                        )) {
+                    if (signBlockEntity.updateText(signText -> {
+                        if (dyeColor.isPresent()) {
+                            return signText.setColor(dyeColor.get());
+                        }
+                        return signText;
+                    }, front)) {
                         world
                             .playSound(
                                 null,
