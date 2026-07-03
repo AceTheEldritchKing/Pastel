@@ -1,5 +1,6 @@
 package earth.terrarium.pastel.data.loot.block;
 
+import earth.terrarium.pastel.blocks.geology.AzureCrystalBlock;
 import earth.terrarium.pastel.compat.ae2.AE2Compat;
 import earth.terrarium.pastel.compat.create.CreateCompat;
 import earth.terrarium.pastel.loot.conditions.NearMoonstoneLootCondition;
@@ -12,6 +13,7 @@ import net.minecraft.advancements.critereon.ItemEnchantmentsPredicate;
 import net.minecraft.advancements.critereon.ItemPredicate;
 import net.minecraft.advancements.critereon.ItemSubPredicates;
 import net.minecraft.advancements.critereon.MinMaxBounds;
+import net.minecraft.advancements.critereon.StatePropertiesPredicate;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
@@ -36,6 +38,7 @@ import net.minecraft.world.level.storage.loot.functions.ApplyExplosionDecay;
 import net.minecraft.world.level.storage.loot.functions.SetItemCountFunction;
 import net.minecraft.world.level.storage.loot.predicates.AnyOfCondition;
 import net.minecraft.world.level.storage.loot.predicates.InvertedLootItemCondition;
+import net.minecraft.world.level.storage.loot.predicates.LootItemBlockStatePropertyCondition;
 import net.minecraft.world.level.storage.loot.predicates.LootItemRandomChanceCondition;
 import net.minecraft.world.level.storage.loot.predicates.MatchTool;
 import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
@@ -448,6 +451,15 @@ public class ResourceBlockLootTables extends BlockLootSubProvider {
                 PastelBlocks.AZURE_CRYSTAL.get(),
                 LootItem
                     .lootTableItem(PastelItems.RAW_AZURITE)
+                    .when(
+                        LootItemBlockStatePropertyCondition
+                            .hasBlockStateProperties(PastelBlocks.AZURE_CRYSTAL.get())
+                            .setProperties(
+                                StatePropertiesPredicate.Builder
+                                    .properties()
+                                    .hasProperty(AzureCrystalBlock.WARDED, false)
+                            )
+                    )
                     .apply(ApplyExplosionDecay.explosionDecay())
                     .apply(ApplyBonusCount.addBonusBinomialDistributionCount(fortune, 0.2f, 0))
                     .apply(ApplyBonusCount.addUniformBonusCount(resonance, 1))
