@@ -26,5 +26,8 @@ public class PastelBiomeTagsProvider extends TagsProvider<Biome> {
     protected void addTags(HolderLookup.Provider lookupProvider) {
         tag(Tags.Biomes.IS_UNDERGROUND)
             .add(PastelBiomes.AZURE_SPIRES);
+        tag(Tags.Biomes.IS_CAVE).add(PastelBiomes.AZURE_SPIRES);
+        tag(Tags.Biomes.IS_COLD).add(PastelBiomes.AZURE_SPIRES);
+        tag(Tags.Biomes.NO_DEFAULT_MONSTERS).add(PastelBiomes.AZURE_SPIRES);
     }
 }
