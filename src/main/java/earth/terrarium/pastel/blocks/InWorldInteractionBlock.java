@@ -76,6 +76,9 @@ public abstract class InWorldInteractionBlock extends BaseEntityBlock {
             Containers.dropContents(world, pos, inventory);
             world.updateNeighbourForOutputSignal(pos, block);
         }
+        if (blockEntity instanceof InWorldInteractionBlockEntity inWorldInteractionBlockEntity) {
+            inWorldInteractionBlockEntity.updateInClientWorld();
+        }
     }
 
     public ItemStack inputStack(Level world, BlockPos pos, ItemStack itemStack) {
@@ -100,6 +103,7 @@ public abstract class InWorldInteractionBlock extends BaseEntityBlock {
                         0.8F + world.random.nextFloat() * 0.6F
                     );
             }
+            inWorldInteractionBlockEntity.updateInClientWorld();
             return remainingStack;
         }
         return itemStack;
@@ -173,6 +177,7 @@ public abstract class InWorldInteractionBlock extends BaseEntityBlock {
                     0.8F + world.random.nextFloat() * 0.6F
                 );
         }
+        blockEntity.updateInClientWorld();
         return itemsChanged;
     }
 
@@ -207,6 +212,7 @@ public abstract class InWorldInteractionBlock extends BaseEntityBlock {
                 0.8F,
                 0.8F + world.random.nextFloat() * 0.6F
             );
+        blockEntity.updateInClientWorld();
         return true;
     }
 

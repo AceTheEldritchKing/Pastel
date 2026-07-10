@@ -237,6 +237,7 @@ public class FusionShrineBlock extends InWorldInteractionBlock {
                 } else {
                     itemEntity.setItem(ItemHandlerHelper.insertItemStacked(shrine.getInventory(), itemStack, false));
                 }
+                shrine.updateInClientWorld();
             }
 
             // do not pick up items that were results of crafting
