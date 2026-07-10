@@ -4788,7 +4788,11 @@ public class PastelBlocks {
     );
 
     public static final DeferredBlock<Block> TEA_TABLE = register(
-        blockWithItem("tea_table", () -> new TeaTable(galaWood(MapColor.COLOR_BROWN).noOcclusion()), InkColors.LIME)
+        blockWithItem(
+            "tea_table",
+            () -> new TeaTable(galaWood(MapColor.COLOR_BROWN).noOcclusion().strength(5.0F, 8.0F)),
+            InkColors.LIME
+        )
     );
 
     public static final DeferredBlock<Block> WHITE_CUSHION = register(
