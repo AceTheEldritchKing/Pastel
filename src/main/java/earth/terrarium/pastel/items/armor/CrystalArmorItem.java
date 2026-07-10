@@ -4,7 +4,6 @@ import earth.terrarium.pastel.PastelCommon;
 import earth.terrarium.pastel.api.energy.color.InkColors;
 import earth.terrarium.pastel.api.item.EquipAwareItem;
 import earth.terrarium.pastel.api.item.TickingEquipmentItem;
-import earth.terrarium.pastel.attachments.PastelDataAttachments;
 import earth.terrarium.pastel.attachments.data.CitrineJumpsAttachment;
 import earth.terrarium.pastel.attachments.data.JumpCooldownAttachment;
 import earth.terrarium.pastel.helpers.enchantments.Ench;
