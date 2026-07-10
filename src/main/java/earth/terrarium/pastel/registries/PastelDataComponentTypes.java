@@ -331,11 +331,11 @@ public class PastelDataComponentTypes {
             .networkSynchronized(SimpleFluidContent.STREAM_CODEC)
     );
 
-    public static final DataComponentType<Integer> CRYSTAL_ARMOR_EMPOWERED = register(
+    public static final DataComponentType<ItemEnchantments> CRYSTAL_ARMOR_EMPOWERED = register(
         "crystal_armor_empowered",
         builder -> builder
-            .persistent(Codec.INT)
-            .networkSynchronized(ByteBufCodecs.INT)
+            .persistent(ItemEnchantments.CODEC)
+            .networkSynchronized(ItemEnchantments.STREAM_CODEC)
     );
 
     public static final DataComponentType<PaintbrushComponent> PAINTBRUSH = register(

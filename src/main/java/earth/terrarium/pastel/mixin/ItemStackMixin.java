@@ -8,6 +8,7 @@ import earth.terrarium.pastel.api.gui.SlotWithOnClickAction;
 import earth.terrarium.pastel.api.item.Preenchanted;
 import earth.terrarium.pastel.api.item.TooltipExtensions;
 import earth.terrarium.pastel.items.ConcealingOilsItem;
+import earth.terrarium.pastel.items.armor.CrystalArmorItem;
 import earth.terrarium.pastel.registries.PastelDataComponentTypes;
 import earth.terrarium.pastel.registries.PastelEnchantmentTags;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
@@ -180,8 +181,7 @@ public abstract class ItemStackMixin {
         TooltipFlag tooltipFlag,
         Operation<Void> original
     ) {
-        int empowerLevel = instance.getOrDefault(PastelDataComponentTypes.CRYSTAL_ARMOR_EMPOWERED, 0);
-        if (empowerLevel == 0) {
+        if (!instance.has(PastelDataComponentTypes.CRYSTAL_ARMOR_EMPOWERED)) {
             original.call(instance, component, context, tooltipAdder, tooltipFlag);
             return;
         }
@@ -204,7 +204,7 @@ public abstract class ItemStackMixin {
                 ) {
                     var effectiveBoost = orderedEnchantment
                         .value()
-                        .getMaxLevel() == 1 ? 0 : empowerLevel;
+                        .getMaxLevel() == 1 ? 0 : CrystalArmorItem.ENCHANTMENT_BONUS;
                     int level = itemEnchantments.enchantments.getInt(orderedEnchantment);
                     if (level > 0 && Enchantment
                         .getFullname(
@@ -225,7 +225,7 @@ public abstract class ItemStackMixin {
                     var effectiveBoost = enchantment
                         .getKey()
                         .value()
-                        .getMaxLevel() == 1 ? 0 : empowerLevel;
+                        .getMaxLevel() == 1 ? 0 : CrystalArmorItem.ENCHANTMENT_BONUS;
                     Holder<Enchantment> enchantmentKey = (Holder<Enchantment>) enchantment.getKey();
                     if (!orderedEnchants.contains(enchantmentKey) && Enchantment
                         .getFullname(

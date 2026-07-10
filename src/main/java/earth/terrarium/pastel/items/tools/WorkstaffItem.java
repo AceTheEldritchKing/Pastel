@@ -1,6 +1,7 @@
 package earth.terrarium.pastel.items.tools;
 
 import com.cmdpro.databank.DatabankUtils;
+import earth.terrarium.pastel.PastelCommon;
 import earth.terrarium.pastel.api.energy.InkCost;
 import earth.terrarium.pastel.api.energy.InkPowered;
 import earth.terrarium.pastel.api.energy.color.InkColors;
@@ -10,6 +11,7 @@ import earth.terrarium.pastel.components.WorkstaffComponent;
 import earth.terrarium.pastel.helpers.Support;
 import earth.terrarium.pastel.helpers.enchantments.Ench;
 import earth.terrarium.pastel.inventories.WorkstaffScreenHandler;
+import earth.terrarium.pastel.items.armor.CrystalArmorItem;
 import earth.terrarium.pastel.registries.PastelAdvancements;
 import earth.terrarium.pastel.registries.PastelDataComponentTypes;
 import earth.terrarium.pastel.registries.PastelEnchantments;
@@ -32,6 +34,7 @@ import net.minecraft.world.item.Tier;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.common.ItemAbility;
 
@@ -126,16 +129,11 @@ public class WorkstaffItem extends MultiToolItem implements AreaMiningHandler, P
             // switching to another enchantment
             // fortune handling is a bit special. Its level is preserved in NBT,
             // to restore the original enchant level when switching back
-            case SELECT_FORTUNE ->
-                enchantAndRemoveOthers(player, stack, toggle.getTriggerText(), Enchantments.FORTUNE);
+            case SELECT_FORTUNE -> enchantAndRemoveOthers(player, stack, toggle.getTriggerText(), Enchantments.FORTUNE);
             case SELECT_SILK_TOUCH ->
                 enchantAndRemoveOthers(player, stack, toggle.getTriggerText(), Enchantments.SILK_TOUCH);
-            case SELECT_RESONANCE -> enchantAndRemoveOthers(
-                player,
-                stack,
-                toggle.getTriggerText(),
-                PastelEnchantments.RESONANCE
-            );
+            case SELECT_RESONANCE ->
+                enchantAndRemoveOthers(player, stack, toggle.getTriggerText(), PastelEnchantments.RESONANCE);
             case ENABLE_RIGHT_CLICK_ACTIONS -> {
                 stack
                     .update(
@@ -184,7 +182,7 @@ public class WorkstaffItem extends MultiToolItem implements AreaMiningHandler, P
         var registryLookup = player.level().registryAccess();
 
         int existingLevel = Ench.getLevel(registryLookup, enchantment, stack);
-        int crystalEmpower = stack.getOrDefault(PastelDataComponentTypes.CRYSTAL_ARMOR_EMPOWERED, 0);
+        boolean crystalEmpower = stack.has(PastelDataComponentTypes.CRYSTAL_ARMOR_EMPOWERED);
         if (existingLevel > 0) {
             player
                 .displayClientMessage(
@@ -199,13 +197,22 @@ public class WorkstaffItem extends MultiToolItem implements AreaMiningHandler, P
         if (enchantment == Enchantments.FORTUNE) {
             level = stack.getOrDefault(PastelDataComponentTypes.WORKSTAFF, WorkstaffComponent.DEFAULT).fortuneLevel();
         } else {
-            int fortuneLevel = Ench.getLevel(registryLookup, Enchantments.FORTUNE, stack) - crystalEmpower; // don't store empowered bonuses
+            var fort = Ench.getEntry(registryLookup, Enchantments.FORTUNE);
+            if (fort.isEmpty()) {
+                PastelCommon.logError("Fortune enchantment is missing during workstaff enchant checks!");
+                return;
+            }
+            int fortuneLevel = crystalEmpower
+                ? stack
+                    .getOrDefault(PastelDataComponentTypes.CRYSTAL_ARMOR_EMPOWERED, ItemEnchantments.EMPTY)
+                    .getLevel(fort.get())
+                : Ench.getLevel(registryLookup, Enchantments.FORTUNE, stack); // don't store empowered bonuses
             if (fortuneLevel > 0)
                 stack
                     .update(
                         PastelDataComponentTypes.WORKSTAFF,
                         WorkstaffComponent.DEFAULT,
-                        comp -> new WorkstaffComponent(comp.canTill(), comp.canShoot(), Math.max(fortuneLevel, 1))
+                        comp -> new WorkstaffComponent(comp.canTill(), comp.canShoot(), fortuneLevel)
                     );
         }
 
@@ -237,7 +244,8 @@ public class WorkstaffItem extends MultiToolItem implements AreaMiningHandler, P
                     );
                 level = 4;
             }
-            if (enchantment == Enchantments.FORTUNE) level += crystalEmpower; // only fortune is a multi-level enchant, here, so only it gets empowered
+            if (enchantment == Enchantments.FORTUNE && crystalEmpower)
+                level += CrystalArmorItem.ENCHANTMENT_BONUS; // only fortune is a multi-level enchant, here, so only it gets empowered
             var addResult = Ench
                 .addOrUpgradeEnchantment(
                     registryLookup,
@@ -289,8 +297,7 @@ public class WorkstaffItem extends MultiToolItem implements AreaMiningHandler, P
 
     @Override
     public boolean canPerformAction(ItemStack stack, ItemAbility itemAbility) {
-        if (!stack.getOrDefault(PastelDataComponentTypes.WORKSTAFF, WorkstaffComponent.DEFAULT).canTill())
-            return false;
+        if (!stack.getOrDefault(PastelDataComponentTypes.WORKSTAFF, WorkstaffComponent.DEFAULT).canTill()) return false;
 
         return super.canPerformAction(stack, itemAbility);
     }
